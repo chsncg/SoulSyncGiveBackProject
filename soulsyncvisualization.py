@@ -44,7 +44,7 @@ with st.sidebar:
 
     st.write("Select artist")
     #create a multiselect option that holds genre
-    artist = st.selectbox('Choose an option:', artist_name, 0)
+    artist = st.selectbox('Choose an option:', artist_name, 2)
 
     st.write("Select song")
     #create a selectbox option that holds all unique artists
