@@ -76,13 +76,13 @@ with col1:
     st.dataframe(dataframe_artist_year)
 
 with col2:
-    st.write("""#### Danceability vs Energy vs Streams """)
+    st.write("""#### Danceability vs Valence """)
     track_data = spotify_data[chart_data]
     fig = px.scatter(track_data, x="track_name", y=["danceability_%", "valence_%"], color_discrete_map={'danceability_%': 'purple', 'valence_%': 'blue'})
     fig.update_traces(marker_size = 15)
     st.plotly_chart(fig)
 
-st.write("""#### Song Streams over Time """)
+st.write("""#### Streams by Song """)
 fig = px.bar(track_data, x="track_name", y="streams", color='track_name', height=550, width=1300)
 st.plotly_chart(fig)
 
