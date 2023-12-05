@@ -13,7 +13,6 @@ spotify_data = pd.read_csv("https://raw.githubusercontent.com/chsncg/SoulSyncGiv
 spotify_data.info()
 spotify_data.duplicated()
 spotify_data.count()
-spotify_data.dropna()
 
 # Creating sidebar widget filters from Spotify dataset
 track = spotify_data['track_name'].unique().tolist()
