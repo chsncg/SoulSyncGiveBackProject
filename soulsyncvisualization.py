@@ -26,6 +26,7 @@ bpm_list = spotify_data['bpm'].unique().tolist()
 playlists_list = spotify_data['in_spotify_playlists'].unique().tolist()
 charts_list = spotify_data['in_spotify_charts'].unique().tolist()
 danceability = spotify_data['danceability_%'].unique().tolist()
+energy = spotify_data['energy_%'].unique().tolist()
 
 # Add the filters. Every widget goes in here
 with st.sidebar:
@@ -60,8 +61,8 @@ month_info = (spotify_data['released_month'].between(*new_month_list))
 #Configure the selectbox and multiselect widget for interactivity
 new_artist_year = (spotify_data['artist(s)_name'] == artist) & (spotify_data['released_year'].isin(year_list))
 
-#Configure the track data for interactivity
-new_track_streams = (spotify_data['artist(s)_name'] == artist)
+#Configure the chart data for interactivity
+chart_data = (spotify_data['artist(s)_name'] == artist)
 
 #VISUALIZATION SECTION
 #group the columns needed for visualizations
@@ -74,7 +75,10 @@ with col1:
 
 with col2:
     st.write("""#### Song Streams over Time """)
-    track_data = spotify_data[new_track_streams]
+    track_data = spotify_data[chart_data]
     fig = px.bar(track_data, x="track_name", y="streams", color='track_name')
     st.plotly_chart(fig)
 
+st.write("""#### Danceability vs Energy vs Streams """)
+fig = px.line(track_data, x="track_name", y=["danceability_%", "energy_%"], color_discrete_map={'danceability_%': 'purple', 'energy_%': 'orange'})
+st.plotly_chart(fig)
