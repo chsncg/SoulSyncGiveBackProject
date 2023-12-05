@@ -26,14 +26,14 @@ bpm_list = spotify_data['bpm'].unique().tolist()
 playlists_list = spotify_data['in_spotify_playlists'].unique().tolist()
 charts_list = spotify_data['in_spotify_charts'].unique().tolist()
 danceability = spotify_data['danceability_%'].unique().tolist()
-energy = spotify_data['energy_%'].unique().tolist()
+valence = spotify_data['valence_%'].unique().tolist()
 
 # Add the filters. Every widget goes in here
 with st.sidebar:
     st.write("Select song release year")
     #create a slider to hold user scores
     new_year_list = st.slider(label = "Choose a value:",
-                                  min_value = 1940,
+                                  min_value = 1990,
                                   max_value = 2023,
                                  value = (2022,2023))
     st.write("Select song release month")
@@ -42,7 +42,6 @@ with st.sidebar:
                                   min_value = 1,
                                   max_value = 12,
                                   value = (1,12))
-
 
     st.write("Select artist")
     #create a multiselect option that holds genre
@@ -62,7 +61,11 @@ month_info = (spotify_data['released_month'].between(*new_month_list))
 new_artist_year = (spotify_data['artist(s)_name'] == artist) & (spotify_data['released_year'].isin(year_list))
 
 #Configure the chart data for interactivity
-chart_data = (spotify_data['artist(s)_name'] == artist)
+if track_info:
+    chart_data = (spotify_data['artist(s)_name'] == artist) & (spotify_data['track_name'].isin(track_info))
+else:
+    # Handle the case when track_info is empty (e.g., no tracks selected)
+    chart_data = spotify_data['artist(s)_name'] == artist
 
 #VISUALIZATION SECTION
 #group the columns needed for visualizations
@@ -74,11 +77,26 @@ with col1:
     st.dataframe(dataframe_artist_year)
 
 with col2:
-    st.write("""#### Song Streams over Time """)
+    st.write("""#### Danceability vs Energy vs Streams """)
     track_data = spotify_data[chart_data]
-    fig = px.bar(track_data, x="track_name", y="streams", color='track_name')
+    fig = px.scatter(track_data, x="track_name", y=["danceability_%", "valence_%"], color_discrete_map={'danceability_%': 'purple', 'valence_%': 'blue'})
+    fig.update_traces(marker_size = 15)
     st.plotly_chart(fig)
 
-st.write("""#### Danceability vs Energy vs Streams """)
-fig = px.line(track_data, x="track_name", y=["danceability_%", "energy_%"], color_discrete_map={'danceability_%': 'purple', 'energy_%': 'orange'})
+st.write("""#### Song Streams over Time """)
+fig = px.bar(track_data, x="track_name", y="streams", color='track_name', height=550, width=1300)
 st.plotly_chart(fig)
+
+col1, col2 = st.columns([2,3])
+    
+with col1:
+    st.write("""#### Spotify Charts Distribution""")
+    fig_pie = px.pie(track_data, names='track_name', values='in_spotify_charts')
+    fig.update_layout(showlegend=True)
+    st.plotly_chart(fig_pie)
+
+with col2:
+    st.write("""#### Spotify Playlists Distribution""")
+    fig_pie = px.pie(track_data, names='track_name', values='in_spotify_playlists')
+    fig.update_layout(showlegend=True)
+    st.plotly_chart(fig_pie)
