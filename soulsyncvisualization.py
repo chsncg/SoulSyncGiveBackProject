@@ -1,61 +1,85 @@
-import time
-import numpy as np
+import streamlit as st
 import pandas as pd
 import plotly.express as px
-import streamlit as st
+import matplotlib.pyplot as plt
 
-st.set_page_config(
-    page_title="Real-Time Data Science Dashboard",
-    page_icon="✅",
-    layout="wide",
-)
+# To set a webpage title, header and subtitle
+st.set_page_config(page_title = "Spotify analysis",layout = 'wide')
+st.header("SoulSync")
+st.subheader("Interact with this dashboard using the widgets on the sidebar!")
 
-# read csv from a github repo
-dataset_url = "https://gist.githubusercontent.com/rioto9858/ff72b72b3bf5754d29dd1ebf898fc893/raw/1164a139a780b0826faef36c865da65f2d3573e0/top50MusicFrom2010-2019.csv"
+#read in the file
+spotify_data = pd.read_csv("https://raw.githubusercontent.com/chsncg/SoulSyncGiveBackProject/main/spotify-2023.csv")
+spotify_data.info()
+spotify_data.duplicated()
+spotify_data.count()
+spotify_data.dropna()
 
-# read csv from a URL
-@st.experimental_memo
-def get_data() -> pd.DataFrame:
-    return pd.read_csv(dataset_url)
-
-df = get_data()
-
-# dashboard title
-st.title("Spotify Dashboard 2010-19")
-
-# Print out the top artist
-top_artist = df['artist'].value_counts().idxmax()
-st.write(f"Top Artist: {top_artist}")
-
-# Add an image next to the top artist information
-image_url = "https://people.com/thmb/fs95OUVphm331bzezgDbmeRqGHc=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():focal(674x309:676x311):format(webp)/Katy-Perry-Ginger-Instagram-01-121622-ca18a1ece0874f18bb7153a46873d428.jpg"
-st.image(image_url, caption='Top Artist Image', width=200)
+# Creating sidebar widget filters from Spotify dataset
+year_list = spotify_data['released_year'].unique().tolist()
+score_rating = spotify_data['score'].unique().tolist()
+genre_list = spotify_data['genre'].unique().tolist()
 
 
-# Create a scatter plot for song durations in different years
-fig = px.scatter(df, x='year', y='Length - The duration of the song', color='year', 
-                 title='Song Durations Over the Years',
-                 labels={'Length - The duration of the song': 'Song Duration (s)', 'year': 'Year'})
-st.plotly_chart(fig)
+# Add the filters. Every widget goes in here
+with st.sidebar:
+    st.write("Select a range on the slider (it represents movie score) to view the total number of songs in a genre that falls within that range ")
+    #create a slider to hold user scores
+    new_score_rating = st.slider(label = "Choose a value:",
+                                  min_value = 1.0,
+                                  max_value = 10.0,
+                                 value = (3.0,4.0))
 
-# Print out the top genre
-top_genre = df['the genre of the track'].value_counts().idxmax()
-st.write(f"Top Genre: {top_genre}")
 
-# Create a pie chart for different genres of songs released in the year 2010
-data_2019 = df[df['year'] == 2019]
-fig = px.pie(data_2019, names='the genre of the track', title='Distribution of Genres in 2019')
-st.plotly_chart(fig)
+    st.write("Select your preferred genre(s) and year to view the music released that year and in that genre")
+    #create a multiselect option that holds genre
+    new_genre_list = st.multiselect('Choose Genre:',
+                                        genre_list, default = ['Animation', 'Horror', 'Fantasy', 'Romance'])
 
-# Create a trend chart for the popularity of songs for each artist
-fig = px.line(df, x='year', y='Popularity- The higher the value the more popular the song is', color='artist', 
-              title='Artist Popularity Trend Over the Years',
-              labels={'year': 'Year', 'Popularity- The higher the value the more popular the song is': 'Artist Popularity'})
-st.plotly_chart(fig)
+    #create a selectbox option that holds all unique years
+    year = st.selectbox('Choose a Year', year_list, 0)
 
-# Create a point line graph for the number of songs produced by Katy Perry each year
-katy_perry_data = df[df['artist'] == 'Katy Perry']
-fig = px.line(katy_perry_data, x='year', y='Popularity- The higher the value the more popular the song is', title='Popularity by Katy Perry Each Year',
-              labels={'year': 'Year', 'Popularity- The higher the value the more popular the song is': 'Popularity'})
-fig.update_traces(mode='markers+lines')
-st.plotly_chart(fig)
+#Configure the slider widget for interactivity
+score_info = (spotify_data['score'].between(*new_score_rating))
+
+
+
+#Configure the selectbox and multiselect widget for interactivity
+new_genre_year = (spotify_data['genre'].isin(new_genre_list)) & (spotify_data['year'] == year)
+
+
+#VISUALIZATION SECTION
+#group the columns needed for visualizations
+col1, col2 = st.columns([2,3])
+with col1:
+    st.write("""#### Lists of movies filtered by year and Genre """)
+    dataframe_genre_year = spotify_data[new_genre_year].groupby(['name', 'genre'])['year'].sum()
+    dataframe_genre_year = dataframe_genre_year.reset_index()
+    st.dataframe(dataframe_genre_year, width = 400)
+
+with col2:
+    st.write("""#### User score of movies and their genre """)
+    rating_count_year = spotify_data[score_info].groupby('genre')['score'].count()
+    rating_count_year = rating_count_year.reset_index()
+    figpx = px.line(rating_count_year, x = 'genre', y = 'score')
+    st.plotly_chart(figpx)
+
+
+
+
+ # creating a bar graph with matplotlib
+st.write("""
+Average Movie Budget, Grouped by Genre
+    """)
+avg_budget = spotify_data.groupby('genre')['budget'].mean().round()
+avg_budget = avg_budget.reset_index()
+genre = avg_budget['genre']
+avg_bud = avg_budget['budget']
+
+fig = plt.figure(figsize = (19, 10))
+
+plt.bar(genre, avg_bud, color = 'maroon')
+plt.xlabel('genre')
+plt.ylabel('budget')
+plt.title('Matplotlib Bar Chart Showing The Average Budget of Movies in Each Genre')
+st.pyplot(fig)
