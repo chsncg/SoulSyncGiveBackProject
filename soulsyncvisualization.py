@@ -68,12 +68,13 @@ new_track_streams = (spotify_data['artist(s)_name'] == artist)
 col1, col2 = st.columns([2,3])
 with col1:
     st.write("""#### List of Songs Filtered by Artist and Year """)
-    dataframe_artist_year = spotify_data[new_artist_year].groupby(['track_name', 'artist(s)_name'])['released_year'].count()
+    dataframe_artist_year = spotify_data[new_artist_year].groupby(['track_name', 'artist(s)_name'])['released_year'].sum()
     dataframe_artist_year = dataframe_artist_year.reset_index()
     st.dataframe(dataframe_artist_year)
 
 with col2:
     st.write("""#### Song Streams over Time """)
     track_data = spotify_data[new_track_streams]
-    fig = px.line(track_data, x="released_year", y="streams", color='track_name')
+    fig = px.bar(track_data, x="track_name", y="streams", color='track_name')
     st.plotly_chart(fig)
+
