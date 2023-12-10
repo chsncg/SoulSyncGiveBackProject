@@ -57,7 +57,7 @@ year_info = (spotify_data['released_year'].between(*new_year_list))
 month_info = (spotify_data['released_month'].between(*new_month_list))
 
 #Configure the selectbox and multiselect widget for interactivity
-new_artist_year = (spotify_data['artist(s)_name'] == artist) & (spotify_data['released_year'].isin(year_list))
+new_artist_year = (spotify_data['artist(s)_name'] == artist) & (spotify_data['released_year'].isin(year_info))
 
 #Configure the chart data for interactivity
 if track_info:
